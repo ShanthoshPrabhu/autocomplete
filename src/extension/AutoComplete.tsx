@@ -1,6 +1,7 @@
 import { Extension } from "@tiptap/core";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
+import { auth } from "../../lib/firebase";
 const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
 
 export interface AutocompleteOptions {
@@ -95,7 +96,6 @@ export const AutocompleteExtension = Extension.create<AutocompleteOptions>({
           apply(tr, oldState, newState) {
             const meta = tr.getMeta(autocompleteKey);
             if (meta) {
-              console.log("🔄 Plugin state updated via meta:", meta);
               return meta;
             }
 
@@ -111,9 +111,6 @@ export const AutocompleteExtension = Extension.create<AutocompleteOptions>({
               currentWord.length < 2 ||
               Math.abs(from - oldState.lastPosition) > currentWord.length + 5
             ) {
-              console.log(
-                "❌ Clearing suggestions - word too short or position changed significantly"
-              );
               return {
                 suggestion: null,
                 decorations: DecorationSet.empty,
@@ -123,7 +120,6 @@ export const AutocompleteExtension = Extension.create<AutocompleteOptions>({
             }
 
             if (currentWord !== oldState.lastQuery) {
-              console.log("🔄 Query changed, clearing suggestions");
               return {
                 suggestion: null,
                 decorations: DecorationSet.empty,
@@ -144,19 +140,12 @@ export const AutocompleteExtension = Extension.create<AutocompleteOptions>({
         view(editorView) {
           let isProcessing = false;
 
-          const updateSuggestions = async (query: string, position: number) => {
+          const updateSuggestions = async (query: string) => {
             if (isProcessing) {
-              console.log("⏸️ Already processing, skipping");
               return;
             }
 
             isProcessing = true;
-            console.log(
-              "🚀 Starting API call for:",
-              `'${query}'`,
-              "at position:",
-              position
-            );
 
             if (currentAbortController) {
               currentAbortController.abort();
@@ -166,6 +155,13 @@ export const AutocompleteExtension = Extension.create<AutocompleteOptions>({
             const signal = currentAbortController.signal;
 
             try {
+              const user = auth.currentUser;
+              if (!user) {
+                throw new Error("User not authenticated");
+              }
+              
+              const token = await user.getIdToken();
+
               const response = await fetch(
                 `${options.apiBaseUrl}/autocomplete?query=${encodeURIComponent(
                   query
@@ -175,12 +171,12 @@ export const AutocompleteExtension = Extension.create<AutocompleteOptions>({
                   headers: {
                     "ngrok-skip-browser-warning": "true",
                     "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`,
                   },
                 }
               );
 
               if (signal.aborted) {
-                console.log("🛑 Request aborted");
                 return;
               }
 
@@ -189,19 +185,14 @@ export const AutocompleteExtension = Extension.create<AutocompleteOptions>({
               }
 
               const data = await response.json();
-              console.log("📡 API response:", data);
 
               const matches = data.suggestions || [];
-              console.log("🔍 Matches found:", matches);
 
               if (matches.length > 0) {
                 const bestMatch = matches[0];
 
-                console.log("🎯 Best match:", bestMatch);
-
                 if (bestMatch) {
                   const completion = bestMatch.slice(query.length);
-                  console.log("✂️ Completion text:", `'${completion}'`);
 
                   if (completion && completion.length > 0) {
                     const currentState = editorView.state;
@@ -212,11 +203,6 @@ export const AutocompleteExtension = Extension.create<AutocompleteOptions>({
                     );
 
                     if (currentWordNow === query) {
-                      console.log(
-                        "📍 Creating decoration at position:",
-                        currentFrom
-                      );
-
                       const decoration = Decoration.widget(
                         currentFrom,
                         createGhostTextWidget(completion),
@@ -235,34 +221,20 @@ export const AutocompleteExtension = Extension.create<AutocompleteOptions>({
                         lastPosition: currentFrom,
                       };
 
-                      console.log("✅ Setting suggestion state:", newState);
-
                       const tr = editorView.state.tr.setMeta(
                         autocompleteKey,
                         newState
                       );
                       editorView.dispatch(tr);
-
-                      console.log("🎉 Suggestion dispatched!");
-                    } else {
-                      console.log(
-                        "⚠️ Query changed during API call, ignoring result"
-                      );
                     }
                   }
                 }
               }
-
-              if (!matches.length) {
-                console.log("❌ No valid suggestions found");
-              }
             } catch (error) {
               if (error instanceof Error && error.name === "AbortError") {
-                console.log("🛑 Request was aborted");
                 return;
               }
-
-              console.error("💥 Autocomplete API error:", error);
+              console.error("Autocomplete error:", error);
             } finally {
               isProcessing = false;
               currentAbortController = null;
@@ -285,15 +257,7 @@ export const AutocompleteExtension = Extension.create<AutocompleteOptions>({
                 state
               ) as AutocompleteState;
 
-              console.log(
-                "📋 Update triggered - word:",
-                `'${currentWord}'`,
-                "position:",
-                from
-              );
-
               if (currentWord.length < 2) {
-                console.log("❌ Word too short, skipping");
                 return;
               }
 
@@ -301,18 +265,14 @@ export const AutocompleteExtension = Extension.create<AutocompleteOptions>({
                 pluginState.lastQuery === currentWord &&
                 pluginState.suggestion
               ) {
-                console.log("✅ Already have suggestion for this query");
                 return;
               }
 
-              console.log("⏱️ Setting up debounced API call");
-
               debounceTimer = setTimeout(() => {
-                updateSuggestions(currentWord, from);
+                updateSuggestions(currentWord);
               }, options.debounceMs);
             },
             destroy: () => {
-              console.log("🧹 Cleaning up autocomplete plugin");
               if (debounceTimer) {
                 clearTimeout(debounceTimer);
                 debounceTimer = null;
@@ -348,14 +308,9 @@ function getCurrentWord(doc: any, pos: number): string {
 }
 
 function createGhostTextWidget(completion: string): HTMLElement {
-  console.log(
-    "👻 Creating ghost text widget with completion:",
-    `'${completion}'`
-  );
   const span = document.createElement("span");
   span.textContent = completion;
   span.style.color = "#6b7280";
-  span.style.fontStyle = "italic";
   span.style.opacity = "0.7";
   span.style.pointerEvents = "none";
   span.contentEditable = "false";
