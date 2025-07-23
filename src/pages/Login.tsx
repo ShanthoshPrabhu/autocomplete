@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { useNavigate } from "react-router-dom";
 import { auth } from "../../lib/firebase";
@@ -9,6 +9,7 @@ const Login: React.FC = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const submitButtonRef = useRef<HTMLButtonElement>(null);
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,6 +24,13 @@ const Login: React.FC = () => {
       setError(error.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !loading && submitButtonRef.current) {
+      e.preventDefault();
+      submitButtonRef.current?.click();
     }
   };
 
@@ -50,6 +58,7 @@ const Login: React.FC = () => {
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setEmail(e.target.value)
                 }
+                onKeyDown={onKeyDown}
                 style={{
                   WebkitBoxShadow: "0 0 0 1000px black inset",
                   WebkitTextFillColor: "white",
@@ -70,6 +79,7 @@ const Login: React.FC = () => {
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setPassword(e.target.value)
                 }
+                onKeyDown={onKeyDown}
                 style={{
                   WebkitBoxShadow: "0 0 0 1000px black inset",
                   WebkitTextFillColor: "white",
@@ -84,6 +94,7 @@ const Login: React.FC = () => {
 
           <div className="space-y-4">
             <button
+              ref={submitButtonRef}
               type="submit"
               disabled={loading}
               className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-black bg-white hover:bg-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white disabled:opacity-50 cursor-pointer"
