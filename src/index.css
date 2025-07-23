@@ -1,0 +1,81 @@
+@import "tailwindcss";
+/* @plugin "@tailwindcss/typography"; */
+
+.prose-invert {
+  --tw-prose-body: rgb(209 213 219);
+  --tw-prose-headings: rgb(255 255 255);
+  --tw-prose-links: rgb(96 165 250);
+  --tw-prose-bold: rgb(255 255 255);
+  --tw-prose-counters: rgb(156 163 175);
+  --tw-prose-bullets: rgb(156 163 175);
+  --tw-prose-hr: rgb(75 85 99);
+  --tw-prose-quotes: rgb(156 163 175);
+  --tw-prose-quote-borders: rgb(75 85 99);
+  --tw-prose-captions: rgb(156 163 175);
+  --tw-prose-code: rgb(255 255 255);
+  --tw-prose-pre-code: rgb(229 231 235);
+  --tw-prose-pre-bg: rgb(17 24 39);
+  --tw-prose-th-borders: rgb(75 85 99);
+  --tw-prose-td-borders: rgb(55 65 81);
+}
+
+.tiptap {
+  outline: none;
+  background: black;
+  color: rgb(209 213 219);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.tiptap ul {
+  list-style-type: disc;
+  list-style-position: outside;
+  margin-left: 1.5rem;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+.tiptap ol {
+  list-style-type: decimal;
+  list-style-position: outside;
+  margin-left: 1.5rem;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+.tiptap li {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  color: rgb(209 213 219);
+}
+
+.tiptap li::marker {
+  color: rgb(156 163 175);
+}
+
+.tiptap p {
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+  color: rgb(209 213 219);
+  font-size: 1rem;
+}
+
+.tiptap h1,
+.tiptap h2,
+.tiptap h3,
+.tiptap h4,
+.tiptap h5,
+.tiptap h6 {
+  color: rgb(255 255 255);
+  font-weight: 600;
+}
+
+.tiptap strong {
+  color: rgb(255 255 255);
+  font-weight: 600;
+}
+
+.tiptap em {
+  color: rgb(209 213 219);
+  font-style: italic;
+}
