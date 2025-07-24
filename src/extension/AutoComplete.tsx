@@ -32,7 +32,7 @@ export const AutocompleteExtension = Extension.create<AutocompleteOptions>({
 
   addOptions() {
     return {
-      debounceMs: 300,
+      debounceMs: 200,
       apiBaseUrl,
     };
   },
@@ -44,6 +44,7 @@ export const AutocompleteExtension = Extension.create<AutocompleteOptions>({
         ({ state, dispatch }) => {
           const { doc, selection } = state;
           const { from } = selection;
+
           const plugin = autocompleteKey.getState(state) as AutocompleteState;
 
           if (!plugin || !plugin.suggestion) return false;
@@ -99,7 +100,6 @@ export const AutocompleteExtension = Extension.create<AutocompleteOptions>({
               return meta;
             }
 
-
             if (tr.docChanged) {
               const { doc, selection } = newState;
               const { from } = selection;
@@ -114,7 +114,10 @@ export const AutocompleteExtension = Extension.create<AutocompleteOptions>({
                 };
               }
 
-              if (Math.abs(from - oldState.lastPosition) > currentWord.length + 5) {
+              if (
+                Math.abs(from - oldState.lastPosition) >
+                currentWord.length + 5
+              ) {
                 return {
                   suggestion: null,
                   decorations: DecorationSet.empty,
@@ -166,7 +169,7 @@ export const AutocompleteExtension = Extension.create<AutocompleteOptions>({
               if (!user) {
                 throw new Error("User not authenticated");
               }
-              
+
               const token = await user.getIdToken();
 
               const response = await fetch(
@@ -178,7 +181,7 @@ export const AutocompleteExtension = Extension.create<AutocompleteOptions>({
                   headers: {
                     "ngrok-skip-browser-warning": "true",
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`,
+                    Authorization: `Bearer ${token}`,
                   },
                 }
               );
@@ -198,7 +201,10 @@ export const AutocompleteExtension = Extension.create<AutocompleteOptions>({
               if (matches.length > 0) {
                 const bestMatch = matches[0];
 
-                if (bestMatch && bestMatch.toLowerCase().startsWith(query.toLowerCase())) {
+                if (
+                  bestMatch &&
+                  bestMatch.toLowerCase().startsWith(query.toLowerCase())
+                ) {
                   const completion = bestMatch.slice(query.length);
 
                   if (completion && completion.length > 0) {
@@ -277,7 +283,10 @@ export const AutocompleteExtension = Extension.create<AutocompleteOptions>({
                 return;
               }
 
-              if (pluginState.lastQuery === currentWord && pluginState.suggestion) {
+              if (
+                pluginState.lastQuery === currentWord &&
+                pluginState.suggestion
+              ) {
                 return;
               }
 
@@ -285,7 +294,7 @@ export const AutocompleteExtension = Extension.create<AutocompleteOptions>({
                 const latestState = view.state;
                 const latestFrom = latestState.selection.from;
                 const latestWord = getCurrentWord(latestState.doc, latestFrom);
-                
+
                 if (latestWord === currentWord && latestWord.length >= 2) {
                   updateSuggestions(currentWord);
                 }

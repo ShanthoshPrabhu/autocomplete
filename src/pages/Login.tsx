@@ -17,8 +17,7 @@ const Login: React.FC = () => {
     setError("");
 
     try {
-      const result = await signInWithEmailAndPassword(auth, email, password);
-      console.log(result);
+      await signInWithEmailAndPassword(auth, email, password);
       navigate("/");
     } catch (error: any) {
       setError(error.message);
@@ -36,7 +35,7 @@ const Login: React.FC = () => {
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-black">
-      <div className="max-w-md w-full space-y-8">
+      <div className="max-w-sm w-full space-y-8">
         <div>
           <h2 className=" text-center text-3xl font-medium text-white">
             Sign In
