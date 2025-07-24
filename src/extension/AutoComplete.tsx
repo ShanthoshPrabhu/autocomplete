@@ -32,7 +32,7 @@ export const AutocompleteExtension = Extension.create<AutocompleteOptions>({
 
   addOptions() {
     return {
-      debounceMs: 200,
+      debounceMs: 100,
       apiBaseUrl,
     };
   },
