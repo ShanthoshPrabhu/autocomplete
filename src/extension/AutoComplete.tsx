@@ -99,33 +99,40 @@ export const AutocompleteExtension = Extension.create<AutocompleteOptions>({
               return meta;
             }
 
-            if (!tr.docChanged && !tr.selectionSet) {
-              return oldState;
-            }
 
-            const { doc, selection } = newState;
-            const { from } = selection;
-            const currentWord = getCurrentWord(doc, from);
+            if (tr.docChanged) {
+              const { doc, selection } = newState;
+              const { from } = selection;
+              const currentWord = getCurrentWord(doc, from);
 
-            if (
-              currentWord.length < 2 ||
-              Math.abs(from - oldState.lastPosition) > currentWord.length + 5
-            ) {
-              return {
-                suggestion: null,
-                decorations: DecorationSet.empty,
-                lastQuery: "",
-                lastPosition: from,
-              };
-            }
+              if (currentWord.length < 2) {
+                return {
+                  suggestion: null,
+                  decorations: DecorationSet.empty,
+                  lastQuery: "",
+                  lastPosition: from,
+                };
+              }
 
-            if (currentWord !== oldState.lastQuery) {
+              if (Math.abs(from - oldState.lastPosition) > currentWord.length + 5) {
+                return {
+                  suggestion: null,
+                  decorations: DecorationSet.empty,
+                  lastQuery: "",
+                  lastPosition: from,
+                };
+              }
+
               return {
                 suggestion: null,
                 decorations: DecorationSet.empty,
                 lastQuery: currentWord,
                 lastPosition: from,
               };
+            }
+
+            if (!tr.selectionSet) {
+              return oldState;
             }
 
             return oldState;
@@ -191,7 +198,7 @@ export const AutocompleteExtension = Extension.create<AutocompleteOptions>({
               if (matches.length > 0) {
                 const bestMatch = matches[0];
 
-                if (bestMatch) {
+                if (bestMatch && bestMatch.toLowerCase().startsWith(query.toLowerCase())) {
                   const completion = bestMatch.slice(query.length);
 
                   if (completion && completion.length > 0) {
@@ -202,7 +209,7 @@ export const AutocompleteExtension = Extension.create<AutocompleteOptions>({
                       currentFrom
                     );
 
-                    if (currentWordNow === query) {
+                    if (currentWordNow.toLowerCase() === query.toLowerCase()) {
                       const decoration = Decoration.widget(
                         currentFrom,
                         createGhostTextWidget(completion),
@@ -258,18 +265,30 @@ export const AutocompleteExtension = Extension.create<AutocompleteOptions>({
               ) as AutocompleteState;
 
               if (currentWord.length < 2) {
+                if (pluginState.suggestion) {
+                  const tr = view.state.tr.setMeta(autocompleteKey, {
+                    suggestion: null,
+                    decorations: DecorationSet.empty,
+                    lastQuery: "",
+                    lastPosition: from,
+                  });
+                  view.dispatch(tr);
+                }
                 return;
               }
 
-              if (
-                pluginState.lastQuery === currentWord &&
-                pluginState.suggestion
-              ) {
+              if (pluginState.lastQuery === currentWord && pluginState.suggestion) {
                 return;
               }
 
               debounceTimer = setTimeout(() => {
-                updateSuggestions(currentWord);
+                const latestState = view.state;
+                const latestFrom = latestState.selection.from;
+                const latestWord = getCurrentWord(latestState.doc, latestFrom);
+                
+                if (latestWord === currentWord && latestWord.length >= 2) {
+                  updateSuggestions(currentWord);
+                }
               }, options.debounceMs);
             },
             destroy: () => {
