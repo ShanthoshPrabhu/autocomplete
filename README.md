@@ -1,69 +1,66 @@
-# React + TypeScript + Vite
+## Setup Steps
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+1. **Clone the Repository**
+   ```sh
+   git clone https://github.com/ShanthoshPrabhu/autocomplete.git
+   cd autocomplete
+   ```
 
-Currently, two official plugins are available:
+2. **Install Dependencies**
+   ```sh
+   npm install
+   ```
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+3. **Configure Environment Variables**
+   - Copy the example environment file and update it with your own values:
+     ```sh
+     cp .env.example .env
+     ```
+   - Edit `.env` to set your API base URL and Firebase config (see below).
 
-## Expanding the ESLint configuration
+4. **Start the Development Server**
+   ```sh
+   npm run dev
+   ```
+   The app will be available at [http://localhost:5173](http://localhost:5173) by default.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+---
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
+## 🔌 API Usage
+
+- The frontend expects an autocomplete API endpoint, which should be set in your `.env` file as `VITE_API_BASE_URL`.
+- The autocomplete endpoint should accept a `query` parameter and return suggestions in the following format:
+  ```json
   {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+    "suggestions": ["suggestion1", "suggestion2", ...]
+  }
+  ```
+- Example request:
+  ```
+  GET {VITE_API_BASE_URL}/autocomplete?query=yourText&limit=10
+  ```
+- The request must be authenticated with a Firebase ID token in the `Authorization` header.
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
+---
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## Firebase Setup Notes
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+1. **Create a Firebase Project**
+   - Go to [Firebase Console](https://console.firebase.google.com/) and create a new project.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+2. **Register a Web App**
+   - In your Firebase project, add a new web app and copy the Firebase config object.
 
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+3. **Update `.env` with Firebase Config**
+   - Add your Firebase config values to the `.env` file:
+     ```
+     VITE_FIREBASE_API_KEY=your_api_key
+     VITE_FIREBASE_AUTH_DOMAIN=your_auth_domain
+     VITE_FIREBASE_PROJECT_ID=your_project_id
+     VITE_FIREBASE_APP_ID=your_app_id
+     VITE_API_BASE_URL=http://localhost:8000  # or your backend URL
+     ```
+   - Make sure all required Firebase fields are present.
+
+4. **Enable Authentication**
+   - In the Firebase Console, enable the authentication method(s) you want to use (e.g., Email/Password, Google).
