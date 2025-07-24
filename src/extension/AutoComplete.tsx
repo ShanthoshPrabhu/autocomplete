@@ -320,19 +320,22 @@ export const AutocompleteExtension = Extension.create<AutocompleteOptions>({
 const autocompleteKey = new PluginKey("autocomplete");
 
 function getCurrentWord(doc: any, pos: number): string {
-  let start = pos;
-  let end = pos;
-  const text = doc.textContent;
+  const $pos = doc.resolve(pos);
+  const textBlock = $pos.parent;
+  const textBlockStart = $pos.start();
+  const offsetInBlock = pos - textBlockStart;
+  const text = textBlock.textContent;
+
+  let start = offsetInBlock;
+  let end = offsetInBlock;
 
   while (start > 0 && /\w/.test(text[start - 1])) {
     start--;
   }
-
   while (end < text.length && /\w/.test(text[end])) {
     end++;
   }
-
-  return text.slice(start, pos);
+  return text.slice(start, offsetInBlock);
 }
 
 function createGhostTextWidget(completion: string): HTMLElement {
